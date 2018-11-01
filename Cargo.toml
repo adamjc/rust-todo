@@ -1,0 +1,10 @@
+[package]
+name = "rust-todo"
+version = "0.1.0"
+authors = ["adamjc <adamjc86@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+docopt = "1.0.2"
+serde_derive = "1.0.80"
+serde = "1.0.80"
