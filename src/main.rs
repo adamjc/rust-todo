@@ -1,7 +1,10 @@
+#[allow(unused_imports)]
+
 use serde_derive::Deserialize;
 use docopt::Docopt;
 use std::fs::OpenOptions;
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
+use std::process;
 
 const USAGE: &'static str = "
 TODO
@@ -33,14 +36,28 @@ fn main() -> std::io::Result<()> {
   let args: Args = Docopt::new(USAGE)
                     .and_then(|d| d.deserialize())
                     .unwrap_or_else(|e| e.exit());
+  
+  let mut todos = Todos { todos: vec![] };
 
-  let file = OpenOptions::new()
+  let mut file = OpenOptions::new()
                   .read(true)
                   .write(true)
                   .create(true)
-                  .open("todos.txt");
+                  .open("todos.md")
+                  .unwrap_or_else(|_| process::exit(0));
+  
+  let mut stringified_todos = String::new();
+  file.read_to_string(&mut stringified_todos).unwrap_or_else(|_| process::exit(0));
+  let split_todos = stringified_todos.split("## ").into_iter().filter(|x| !x.is_empty());
 
-  let mut todos = Todos { todos: vec![] };
+  for mut stringified_todo in split_todos {
+    stringified_todo = stringified_todo.trim_end();
+    let mut split_todo = stringified_todo.split("\n").into_iter().filter(|x| !x.is_empty());
+    let title = split_todo.next().unwrap_or_else(|| process::exit(0));
+    let description = split_todo.next().unwrap_or_else(|| process::exit(0));
+    let todo = Todo { title: title.to_string(), description: description.to_string() };
+    todos.todos.push(todo)
+  }
 
   if args.cmd_add {
     let mut description;
@@ -54,8 +71,8 @@ fn main() -> std::io::Result<()> {
     }
 
     let todo = Todo { 
-      title: args.arg_title, 
-      description: description 
+      title: args.arg_title,
+      description: description
     };
 
     todos.todos.push(todo);
